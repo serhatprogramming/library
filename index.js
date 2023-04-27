@@ -1,5 +1,7 @@
 const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
+// to generate unique ids uuid
+const { v4: uuidv4 } = require("uuid");
 
 let authors = [
   {
@@ -102,6 +104,7 @@ const typeDefs = `
   type Author {
     name: String!
     id: ID!
+    born: Int
     bookCount: Int!
   }
 
@@ -110,6 +113,15 @@ const typeDefs = `
     authorCount: Int!
     allBooks(author:String, genre:String): [Book!]!
     allAuthors: [Author!]!
+  }
+
+  type Mutation {
+    addBook(
+      title: String!
+      published: Int!
+      author: String!
+      genres: [String!]!
+      ):Book
   }
 `;
 
@@ -132,6 +144,17 @@ const resolvers = {
         ...author,
         bookCount: books.filter((book) => book.author === author.name).length,
       })),
+  },
+  Mutation: {
+    addBook: (root, args) => {
+      const book = { ...args, id: uuidv4() };
+      books = books.concat(book);
+      if (!authors.find((author) => author.name === book.author)) {
+        console.log("there is no ", book.author);
+        authors = authors.concat({ name: book.author, id: uuidv4() });
+      }
+      return book;
+    },
   },
 };
 
